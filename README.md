@@ -4,9 +4,9 @@ Authors: Lilin Zhang, [Ning Yang](https://yneversky.github.io), Yanchao Sun, Phi
 
 ------
 
-This is official PyTorch Implementation code for the paper of [Provable Unrestricted Adversarial Training without Compromise with Generalizability](https://ieeexplore.ieee.org/document/10530438) accepted by Transactions on Pattern Analysis and Machine Intelligence. 
+This is official PyTorch implementation code for the paper of [Provable Unrestricted Adversarial Training without Compromise with Generalizability](https://ieeexplore.ieee.org/document/10530438) accepted by Transactions on Pattern Analysis and Machine Intelligence. 
 
-In this paper, we propose a unique viewpoint to understand Unrestricted Adversarial Example (UAE) and propose a novel adversarial training method called Provable Unrestricted Adversarial Training (PUAT), which utilizes partially labeled data to achieve comprehensive robustness with less reduce of standard generalization. The theoretical analysis and experiments demonstrate the superiority of PUAT. Refer to our paper for more details.
+In this paper, we propose a unique viewpoint to understand Unrestricted Adversarial Example (UAE) and a novel adversarial training method called Provable Unrestricted Adversarial Training (PUAT), which utilizes semi-supervised data to achieve comprehensive adversarial robustness with less reduce of standard generalization. The theoretical analysis and experiments demonstrate the superiority of PUAT. Refer to our paper for more details.
 
 ### Datasets
 
