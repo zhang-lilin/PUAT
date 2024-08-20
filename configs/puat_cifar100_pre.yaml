@@ -1,0 +1,80 @@
+
+data_dir: dataset_data
+log_dir: trained_models/pre
+#aux_data_filename:
+debug: false
+puat: true
+desc: cifar100_pre_seed1
+
+# training arguments:
+data: cifar100
+take_amount: 10000
+batch_size: 512
+unsup_fraction: 0.5
+bs_g: 256
+batch_size_validation: 256
+model: wrn-28-10-swish
+lr: 0.2
+
+consistency_cost: 500
+consistency_unsup_frac: 0.6
+consistency_ramp_up: 30
+adv_eval_freq: 10
+num_adv_epochs: 100
+adv_ramp_start: 200
+adv_ramp_end: 300
+gan_start: 10
+tau: 0.99
+tau_after: 0.999
+validation: false
+
+# argments for loss
+beta: 1.0
+ls: 0.1
+alpha: 0.5
+beta1: 0.03
+beta2: 1.0
+
+gan_type: hinge
+gan_traind_c: int
+unsup_fraction_for_d: 0.6
+bcr: false
+a_clip: 0.1
+
+# arguments for G
+g_model_name: resnet_sngan
+g_z_dim: 256
+#g_embed_size: 256
+g_nfilter: 32
+g_nfilter_max: 256
+g_actvn: relu
+g_optim: adam
+g_lr: 0.0001
+g_beta1: 0.
+g_beta2: 0.99
+g_weight_decay: 0.
+g_norm: false
+
+
+a_optim: adam
+a_lr: 0.0001
+a_beta1: 0.
+a_beta2: 0.99
+a_weight_decay: 0.
+a_actvn: relu
+a_embed_size: 256
+
+# arguments for D
+d_model_name: resnet_sngan
+d_z_dim: 256
+d_embed_size: 256
+d_nfilter: 32
+d_nfilter_max: 256
+d_actvn: relu
+wa_model_for_d: false
+d_optim: adam
+d_lr: 0.0001
+d_beta1: 0.
+d_beta2: 0.99
+d_weight_decay: 0.
+d_norm: false

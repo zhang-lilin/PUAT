@@ -1,0 +1,13 @@
+
+data_dir: dataset_data
+log_dir: trained_models
+#desc: standard_seed1
+#data: cifar10
+#batch_size_validation: 100
+debug: false
+
+# training arguments:
+seed: 1
+attack: AutoAttack
+norm: Linf
+version: standard

@@ -1,0 +1,15 @@
+
+data_dir: dataset_data
+log_dir: trained_models
+#desc: 23_PUAT10.0_wrn-28-10-swish_cifar10r_seed1_lr0p2_epoch200_bs512_frac0p5
+#data: cifar10
+#batch_size_validation: 128
+debug: false
+
+# training arguments:
+#resume_path: ./attackers/cifar10/state-last.pt
+seed: 1
+attack: linf-pgd
+attack_iter: 20
+attack_step: 2/255
+attack_eps: 8/255

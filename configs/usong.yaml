@@ -1,0 +1,18 @@
+
+data_dir: dataset_data
+log_dir: trained_models
+#desc:
+#batch_size_validation: 256
+#data: cifar10
+debug: false
+
+# training arguments:
+#resume_path: ./attackers/cifar10/state-last.pt
+seed: 1
+
+attack: usong
+attack_eps: 0.01
+attack_iter: 200
+attack_step: 0.1
+lamb1: 100
+lamb2: 100

@@ -1,0 +1,102 @@
+
+data_dir: dataset_data
+log_dir: trained_models
+debug: false
+puat: true
+desc: imagenet32_seed1
+
+beta: 10.0
+beta2: 6.0
+
+augment: base
+data: imagenet32
+take_amount: 1000
+batch_size: 512
+unsup_fraction: 0.5
+bs_g: 256
+batch_size_validation: 256
+model: wrn-28-10-swish
+lr: 0.2
+
+# argments for loss
+pre_resume_path: trained_models/pre/imagenet32_pre_seed1/state-last.pt
+ls: 0.1
+alpha: 0.5
+beta1: 1.0
+num_adv_epochs: 100
+adv_ramp_start: 0
+adv_ramp_end: 10
+gan_type: hinge
+gan_traind_c: int
+wa_model_for_d: false
+unsup_fraction_for_d: 0.5
+gan_start: 0
+consistency_cost: 50
+consistency_unsup_frac: 0.5
+consistency_ramp_up: 0
+adv_eval_freq: 20
+#attack: fgsm
+tau: 0.99
+tau_after: 0.995
+validation: true
+
+
+### argments for loss
+#ls: 0.1
+#alpha: 0.5
+#beta1: 0.03
+#num_adv_epochs: 100
+#adv_ramp_start: 150
+#adv_ramp_end: 250
+#gan_type: hinge
+#gan_traind_c: int
+#wa_model_for_d: false
+#unsup_fraction_for_d: 0.5
+#gan_start: 10
+#consistency_cost: 50
+#consistency_unsup_frac: 0.5
+#consistency_ramp_up: 30
+#adv_eval_freq: 10
+#tau: 0.99
+#tau_after: 0.999
+#validation: false
+
+# arguments for G
+g_model_name: resnet_sngan
+g_z_dim: 256
+#g_embed_size: 256
+g_nfilter: 32
+g_nfilter_max: 256
+g_actvn: relu
+g_optim: adam
+g_lr: 0.0001
+g_beta1: 0.
+g_beta2: 0.99
+g_weight_decay: 0.
+g_norm: false
+
+
+a_clip: 0.1
+a_optim: adam
+a_lr: 0.0001
+a_beta1: 0.
+a_beta2: 0.99
+a_weight_decay: 0.
+a_actvn: relu
+a_embed_size: 256
+
+# arguments for D
+d_model_name: resnet_sngan
+d_z_dim: 256
+d_embed_size: 256
+d_nfilter: 32
+d_nfilter_max: 256
+d_actvn: relu
+
+d_optim: adam
+d_lr: 0.0001
+d_beta1: 0.
+d_beta2: 0.99
+d_weight_decay: 0.
+d_norm: false
+bcr: false

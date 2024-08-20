@@ -1,0 +1,15 @@
+
+data_dir: dataset_data
+log_dir: trained_models
+#desc:
+#data: cifar10
+#resume_path: ./attackers/cifar10/state-last.pt
+#batch_size_validation: 128
+debug: false
+
+# training arguments:
+seed: 1
+attack: linf-gpgd
+attack_eps: 0.3
+attack_iter: 200
+attack_step: 0.01
