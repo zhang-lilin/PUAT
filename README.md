@@ -1,7 +1,5 @@
 ## Provable Unrestricted Adversarial Training without Compromise with Generalizability
 
-Authors: [Lilin Zhang](https://zhang-lilin.github.io), [Ning Yang](https://yneversky.github.io), Yanchao Sun, Philip S. Yu
-
 ------
 
 This is the PyTorch implementation code for [Provable Unrestricted Adversarial Training without Compromise with Generalizability](https://ieeexplore.ieee.org/document/10530438) accepted by Transactions on Pattern Analysis and Machine Intelligence. 
