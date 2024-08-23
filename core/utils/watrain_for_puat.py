@@ -28,8 +28,7 @@ class WATrainer(Trainer):
 
         seed(args.seed)
         self.wa_model = copy.deepcopy(self.model)
-        # self.eval_attack = torchattacks.PGD(self.wa_model, eps=8/255, alpha=2/255, steps=20)
-        self.eval_attack = create_attack(self.wa_model, CWLoss, args.attack, args.attack_eps, 4*args.attack_iter,
+        self.eval_attack = create_attack(self.wa_model, CWLoss, args.attack, args.attack_eps, 4 * args.attack_iter,
                                          args.attack_step)
         num_samples = 50000 if 'cifar' in self.params.data else 73257
         num_samples = 100000 if 'tiny-imagenet' in self.params.data else num_samples
@@ -42,15 +41,10 @@ class WATrainer(Trainer):
         elif 'svhn' in self.params.data:
             self.num_classes = 10
             self.base_dataset = 'svhn'
-        elif 'tiny-imagenet32' in self.params.data:
-            self.num_classes = 10
-            self.base_dataset = 'tiny-imagenet32'
+            self.eval_attack = torchattacks.AutoAttack(self.wa_model,eps=args.attack_eps, version='standard', n_classes=10)
         elif 'tiny-imagenet' in self.params.data:
             self.num_classes = 10
-            self.base_dataset = 'tiny-imagenet32'
-        elif 'imagenet16' in self.params.data:
-            self.num_classes = 10
-            self.base_dataset = 'imagenet16'
+            self.base_dataset = 'tiny-imagenet'
         elif 'imagenet32' in self.params.data:
             self.num_classes = 10
             self.base_dataset = 'imagenet32'
@@ -63,9 +57,6 @@ class WATrainer(Trainer):
 
 
     def init_optimizer(self, num_epochs):
-        """
-        Initialize optimizer and schedulers.
-        """
         def group_weight(model):
             group_decay = []
             group_no_decay = []
@@ -99,53 +90,23 @@ class WATrainer(Trainer):
                 acc += (predicted == y).sum().item()
             acc /= total
         else:
-            # acc, _, _ = self.eval_attack.save(dataloader, save_path=None, return_verbose=True)
-            # acc = acc / 100
-            acc, total = 0.0, 0
-            for data in tqdm(dataloader, desc='Eval : ', disable=not verbose):
-                x, y = data
-                x, y = x.to(device), y.to(device)
-                total += x.size(0)
-                with ctx_noparamgrad_and_eval(self.wa_model):
-                    x_adv, _ = self.eval_attack.perturb(x, y)
-                with torch.no_grad():
-                    out = self.wa_model(x_adv)
-                _, predicted = torch.max(out, 1)
-                acc += (predicted == y).sum().item()
-            acc /= total
-        self.wa_model.train()
-        return acc
-
-
-    def eval_(self, dataloader, adversarial=False, verbose=True):
-        """
-        Evaluate performance of the model.
-        """
-        acc = 0.0
-        total = 0
-        self.wa_model.eval()
-        self.model.eval()
-        # for x, y in dataloader:
-        device = self.device
-        for data in tqdm(dataloader, desc='Eval : ', disable=not verbose):
-            x, y = data
-            x, y = x.to(device), y.to(device)
-            total += x.size(0)
-            if adversarial:
-                with ctx_noparamgrad_and_eval(self.wa_model):
-                    x_adv, _ = self.eval_attack.perturb(x, y)
-                with torch.no_grad():
-                    out = self.wa_model(x_adv)
+            if self.base_dataset == 'svhn':
+                acc, _, _ = self.eval_attack.save(dataloader, save_path=None, return_verbose=True)
+                acc = acc / 100
             else:
-                with torch.no_grad():
-                    out = self.wa_model(x)
-            _, predicted = torch.max(out, 1)
-            acc += (predicted == y).sum().item()
-            # acc += accuracy(y, out)
-        # acc /= len(dataloader)
-        acc /= total
+                acc, total = 0.0, 0
+                for data in tqdm(dataloader, desc='Eval : ', disable=not verbose):
+                    x, y = data
+                    x, y = x.to(device), y.to(device)
+                    total += x.size(0)
+                    with ctx_noparamgrad_and_eval(self.wa_model):
+                        x_adv, _ = self.eval_attack.perturb(x, y)
+                    with torch.no_grad():
+                        out = self.wa_model(x_adv)
+                    _, predicted = torch.max(out, 1)
+                    acc += (predicted == y).sum().item()
+                acc /= total
         self.wa_model.train()
-        self.model.train()
         return acc
 
 
