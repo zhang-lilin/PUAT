@@ -68,7 +68,7 @@ def load_data(data_dir, logger, batch_size=256, batch_size_test=256, num_workers
         dataset_size = train_dataset.origen_len
         if unsup_fraction <= 0:
             dataset_size = len(train_dataset.sup_indices)
-        num_batches = int(np.ceil(dataset_size / batch_size))
+        num_batches = int(np.ceil(dataset_size / batch_size)) * 2
     if validation:
         train_dataloader, test_dataloader, val_dataloader = get_semisup_dataloaders(
             train_dataset, test_dataset, val_dataset,
