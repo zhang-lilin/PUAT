@@ -1,15 +1,9 @@
-import copy
+import numpy as np
 import numpy as np
 import torch
-import torch.nn as nn
-from torch.autograd import Variable
 
 from .base import Attack, LabelMixin
-
-from .utils import batch_multiply
-from .utils import clamp
 from .utils import is_float_or_torch_tensor
-
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

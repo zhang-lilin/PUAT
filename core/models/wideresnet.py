@@ -1,4 +1,6 @@
 import math
+from typing import Tuple, Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -74,8 +76,21 @@ class WideResNet(nn.Module):
         widen_factor (int): width factor.
         dropRate (float): dropout rate.
     """
-    def __init__(self, depth=34, num_classes=10, widen_factor=10, dropRate=0.0):
+    def __init__(self, depth=34, num_classes=10, widen_factor=10, dropRate=0.0,
+                 mean: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
+                 std: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
+                 padding: int = 0,
+                 num_input_channels: int = 3,
+                 normalize=True,
+                 ):
         super(WideResNet, self).__init__()
+        self.mean = torch.tensor(mean).view(num_input_channels, 1, 1)
+        self.std = torch.tensor(std).view(num_input_channels, 1, 1)
+        self.mean_cuda = None
+        self.std_cuda = None
+        self.normalize = normalize
+        self.padding = padding
+
         nChannels = [16, 16 * widen_factor, 32 * widen_factor, 64 * widen_factor]
         assert ((depth - 4) % 6 == 0)
         n = (depth - 4) / 6
@@ -93,7 +108,7 @@ class WideResNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(nChannels[3])
         self.relu = nn.ReLU(inplace=True)
         self.fc = nn.Linear(nChannels[3], num_classes)
-        self.nChannels = nChannels[3]
+        self.feat_dim = self.nChannels = nChannels[3]
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -105,7 +120,33 @@ class WideResNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
 
-    def forward(self, x):
+    def normalize_(self, x):
+        if x.is_cuda:
+            if self.mean_cuda is None:
+                self.mean_cuda = self.mean.cuda()
+                self.std_cuda = self.std.cuda()
+            x = (x - self.mean_cuda) / self.std_cuda
+        else:
+            x = (x - self.mean) / self.std
+        return x
+
+    def denormalize_(self, x):
+        if x.is_cuda:
+            if self.mean_cuda is None:
+                self.mean_cuda = self.mean.cuda()
+                self.std_cuda = self.std.cuda()
+            x = (x - self.mean_cuda) / self.std_cuda
+            x = x * self.std_cuda + self.mean_cuda
+        else:
+            x = x * self.std + self.mean
+        return x
+
+    def forward(self, x, feats=False):
+        if self.padding > 0:
+            x = F.pad(x, (self.padding,) * 4)
+        if self.normalize:
+            x = self.normalize_(x)
+
         out = self.conv1(x)
         out = self.block1(out)
         out = self.block2(out)
@@ -113,20 +154,96 @@ class WideResNet(nn.Module):
         out = self.relu(self.bn1(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.nChannels)
-        return self.fc(out)
+        if not feats:
+            return self.fc(out)
+        else:
+            return out, self.fc(out)
+
+    def forward_features(self, x):
+        if self.padding > 0:
+            x = F.pad(x, (self.padding,) * 4)
+        if self.normalize:
+            x = self.normalize_(x)
+
+        out = self.conv1(x)
+        out = self.block1(out)
+        out = self.block2(out)
+        out = self.block3(out)
+        out = self.relu(self.bn1(out))
+        out = F.avg_pool2d(out, 8)
+        out = out.view(-1, self.nChannels)
+        return out
+
+    def rf_output(self, x, intermediate_propagate=0, pop=0):
+        if intermediate_propagate == 0:
+            if self.padding > 0:
+                x = F.pad(x, (self.padding,) * 4)
+            if self.normalize:
+                x = self.normalize_(x)
+            out = x
+            out = self.conv1(out)
+            out = self.block1(out)
+            if pop == 1:
+                return out
+            out = self.block2(out)
+            if pop == 2:
+                return out
+            out = self.block3(out)
+            out = self.bn1(out)
+            if pop == 3:
+                return out
+            out = self.relu(out)
+            out = F.avg_pool2d(out, out.shape[2])
+            out = out.view(-1, self.nChannels)
+            return self.fc(out)
+
+        elif intermediate_propagate == 1:
+            out = x
+            out = self.block2(out)
+            out = self.block3(out)
+            out = self.relu(self.bn1(out))
+            out = F.avg_pool2d(out, out.shape[2])
+            out = out.view(-1, self.nChannels)
+            return self.fc(out)
+
+        elif intermediate_propagate == 2:
+            out = x
+            out = self.block3(out)
+            out = self.relu(self.bn1(out))
+            out = F.avg_pool2d(out, out.shape[2])
+            out = out.view(-1, self.nChannels)
+            return self.fc(out)
+
+        elif intermediate_propagate == 3:
+            out = x
+            out = self.relu(out)
+            out = F.avg_pool2d(out, out.shape[2])
+            out = out.view(-1, self.nChannels)
+            return self.fc(out)
+
     
-    
-def wideresnet(name, num_classes=10, device='cpu'):
+def wideresnet(name, logger, num_classes=10, normalize=True, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), device='cpu'):
     """
     Returns suitable Wideresnet model from its name.
     Arguments:
         name (str): name of resnet architecture.
         num_classes (int): number of target classes.
-        device (str or torch.device): device to work on.
     Returns:
         torch.nn.Module.
     """
     name_parts = name.split('-')
     depth = int(name_parts[1])
     widen = int(name_parts[2])
-    return WideResNet(depth=depth, num_classes=num_classes, widen_factor=widen)
+
+    if normalize:
+        if logger is not None:
+            logger.log(f'WideResNet-{depth}-{widen} uses normalization {mean}, {std}.')
+        return WideResNet(num_classes=num_classes, depth=depth, widen_factor=widen,
+                          mean=mean, std=std, normalize=True)
+    else:
+        if logger is not None:
+            logger.log(f'WideResNet-{depth}-{widen}.')
+        return WideResNet(num_classes=num_classes, depth=depth, widen_factor=widen,
+                          normalize=False)
+
+    # return WideResNet(depth=depth, num_classes=num_classes, widen_factor=widen)

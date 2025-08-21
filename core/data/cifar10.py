@@ -2,8 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import re
-from .data_util import IDBH, CIFAR10Policy, CutoutDefault, MultiDataTransform
-from .dataset import SemiSupervisedDataset, InstanceSampleDataset, PseudoDataset
+from .dataset import SemiSupervisedDataset
 
 DATA_DESC = {
     'data': 'cifar10',
@@ -13,7 +12,6 @@ DATA_DESC = {
     'std': [0.2023, 0.1994, 0.2010],
 }
 
-# [(0.4914, 0.4822, 0.4465), (0.2471, 0.2435, 0.2616)]
 class SemiSupervisedCIFAR10(SemiSupervisedDataset):
 
     def load_base_dataset(self, train=False, **kwargs):
@@ -37,9 +35,6 @@ def load_cifar10(data_dir, logger, use_augmentation='none', use_consistency=Fals
             transforms.RandomHorizontalFlip(0.5),
             transforms.ToTensor()
         ])
-
-    if use_consistency:
-        train_transform = MultiDataTransform(train_transform)
 
     train_dataset = SemiSupervisedCIFAR10(base_dataset='cifar10', root=data_dir, train=True, download=True,
                                             transform=train_transform,

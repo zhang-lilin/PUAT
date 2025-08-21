@@ -1,26 +1,15 @@
 from .base import Attack
-
-from .apgd import LinfAPGDAttack
-from .apgd import L2APGDAttack
-
+from .deepfool import DeepFoolAttack
+from .deepfool import L2DeepFoolAttack
+from .deepfool import LinfDeepFoolAttack
 from .fgsm import FGMAttack
 from .fgsm import FGSMAttack
 from .fgsm import L2FastGradientAttack
 from .fgsm import LinfFastGradientAttack
-
-from .pgd import PGDAttack
 from .pgd import L2PGDAttack
 from .pgd import LinfPGDAttack
-
-from .deepfool import DeepFoolAttack
-from .deepfool import LinfDeepFoolAttack
-from .deepfool import L2DeepFoolAttack
-
-from .gpgd import LinfGPGDAttack
-from .usong import UsongAttack
-
+from .pgd import PGDAttack
 from .utils import CWLoss
-
 
 ATTACKS = ['fgsm', 'linf-pgd', 'fgm', 'l2-pgd', 'linf-df', 'l2-df', 'linf-apgd', 'l2-apgd']
 UAE_ATTACKS = ['linf-gpgd', 'usong']
@@ -60,25 +49,6 @@ def create_attack(model, criterion, attack_type, attack_eps, attack_iter, attack
     elif attack_type == 'l2-df':
         attack = L2DeepFoolAttack(model, overshoot=0.02, nb_iter=attack_iter, search_iter=0, clip_min=clip_min, 
                                   clip_max=clip_max)
-    elif attack_type == 'linf-apgd':
-        attack = LinfAPGDAttack(model, criterion, n_restarts=2, eps=attack_eps, nb_iter=attack_iter)
-    elif attack_type == 'l2-apgd':
-        attack = L2APGDAttack(model, criterion, n_restarts=2, eps=attack_eps, nb_iter=attack_iter)
-    else:
-        raise NotImplementedError('{} is not yet implemented!'.format(attack_type))
-    return attack
-
-
-def create_uae_attack(model, generator, discriminator, criterion, attack_type, attack_eps, attack_iter, attack_step, rand_init_type='uniform',
-                  clip_min=0., clip_max=1.):
-    if attack_type == 'linf-gpgd':
-        attack = LinfGPGDAttack(model, generator, loss_fn=criterion, eps=attack_eps, nb_iter=attack_iter,
-                                eps_iter=attack_step, rand_init=True, clip_min=clip_min, clip_max=clip_max,
-                                targeted=False, rand_init_type=rand_init_type)
-    elif attack_type == 'usong':
-        attack = UsongAttack(model, generator, discriminator, loss_fn=criterion, eps=attack_eps, nb_iter=attack_iter,
-                                eps_iter=attack_step, rand_init=True, clip_min=clip_min, clip_max=clip_max,
-                                targeted=False, rand_init_type=rand_init_type)
     else:
         raise NotImplementedError('{} is not yet implemented!'.format(attack_type))
     return attack

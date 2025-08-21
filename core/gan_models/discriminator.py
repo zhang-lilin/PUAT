@@ -1,10 +1,11 @@
-import torch
-from torch import nn
 import math
+from typing import Tuple, Union
+
+import torch
 import torch.nn.functional as F
+from torch import nn
 from torch.nn import init
 from torch.nn import utils
-from typing import Tuple, Union
 
 CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 CIFAR10_STD = (0.2471, 0.2435, 0.2616)

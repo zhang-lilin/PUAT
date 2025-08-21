@@ -19,13 +19,14 @@ Code refer to
 - [Tiny-ImageNet](https://www.kaggle.com/c/tiny-imagenet/overview)
 - [ImageNet32](http://image-net.org/download-images)
 
-### Baseline Model
+### Model
 
-- [WideResNet-28-10](https://arxiv.org/abs/1605.07146) (WRN-28-10) with the [swish](https://arxiv.org/pdf/1606.08415) activation function
+- [WideResNet-28-10](https://arxiv.org/abs/1605.07146) (WRN-28-10) with [swish](https://arxiv.org/pdf/1606.08415) activation function
+- We recommend setting the hyper-parameter $\beta$ to 10 when using ReLU activation function.
 
 ### Example usage
 
-- Train WRN-28-10 by PUAT on CIFAR10
+- Train WRN-28-10-swish by PUAT on CIFAR10
 
 ```
 python runner.py

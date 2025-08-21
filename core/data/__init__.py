@@ -51,18 +51,17 @@ def load_data(data_dir, logger, batch_size=256, batch_size_test=256, num_workers
     load_dataset_fn = _LOAD_DATASET_FN[dataset]
 
     logger.log(f'Dataset {dataset} (seed:{take_amount_seed}, take_amount:{take_amount}) is loading.')
-    train_dataset, test_dataset, val_dataset = load_dataset_fn(data_dir=data_dir,
-                                                               use_augmentation=use_augmentation,
-                                                               use_consistency=use_consistency,
-                                                               validation=validation,
-                                                               take_amount=take_amount,
-                                                               aux_take_amount=aux_take_amount,
-                                                               aux_data_filename=aux_data_filename,
-                                                               take_amount_seed=take_amount_seed,
-                                                               add_aux_labels=add_aux_labels,
-                                                               pseudo_label_model=pseudo_label_model,
-                                                               logger=logger
-                                                               )
+    train_dataset, test_dataset, val_dataset = load_dataset_fn(
+        data_dir=data_dir,
+        use_augmentation=use_augmentation,
+        validation=validation,
+        take_amount=take_amount,
+        aux_take_amount=aux_take_amount,
+        aux_data_filename=aux_data_filename,
+        take_amount_seed=take_amount_seed,
+        add_aux_labels=add_aux_labels,
+        pseudo_label_model=pseudo_label_model,
+        logger=logger,)
 
     if num_batches is None:
         dataset_size = train_dataset.origen_len
@@ -74,17 +73,13 @@ def load_data(data_dir, logger, batch_size=256, batch_size_test=256, num_workers
             train_dataset, test_dataset, val_dataset,
             batch_size=batch_size, batch_size_test=batch_size_test,
             num_workers=num_workers, unsup_fraction=unsup_fraction,
-            num_batches=num_batches,
-            logger=logger
-        )
+            num_batches=num_batches,logger=logger,)
         return train_dataset, test_dataset, val_dataset, train_dataloader, test_dataloader, val_dataloader
     else:
         train_dataloader, test_dataloader = get_semisup_dataloaders(
             train_dataset, test_dataset, None, batch_size=batch_size, batch_size_test=batch_size_test,
             num_workers=num_workers, unsup_fraction=unsup_fraction,
-            num_batches=num_batches,
-            logger=logger
-        )
+            num_batches=num_batches, logger=logger, )
         return train_dataset, test_dataset, None, train_dataloader, test_dataloader, None
 
 

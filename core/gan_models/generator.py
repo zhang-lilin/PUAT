@@ -1,10 +1,10 @@
-import torch
-from torch import nn
 import math
-import torch.nn.functional as F
-from torch.nn import init
 from typing import Tuple, Union
 
+import torch
+import torch.nn.functional as F
+from torch import nn
+from torch.nn import init
 
 CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
 CIFAR10_STD = (0.2471, 0.2435, 0.2616)
@@ -648,9 +648,6 @@ class atk_Generator(nn.Module):
         h = self.block3(h, y=y)
         h = self.l4(h.view(z.size(0), -1))
         z_a = h
-        # h = torch.tanh(h)
-        # z_a = z + self.epsilon * h
-
         return z_a
 
 

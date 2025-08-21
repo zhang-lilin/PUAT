@@ -1,5 +1,7 @@
 import argparse
+
 from .utils import str2bool
+
 
 class _my_argparse(argparse.ArgumentParser):
     def __init__(self, **kwargs):

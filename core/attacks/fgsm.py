@@ -1,9 +1,8 @@
-import torch
 import torch.nn as nn
 
 from .base import Attack, LabelMixin
 from .utils import batch_multiply
-from .utils import clamp 
+from .utils import clamp
 
 
 class FGSMAttack(Attack, LabelMixin):

@@ -1,10 +1,8 @@
 import torch
-
 import torchvision
 import torchvision.transforms as transforms
-from .data_util import MultiDataTransform
-from .dataset import SemiSupervisedDataset, InstanceSampleDataset, PseudoDataset
-import re
+from .dataset import SemiSupervisedDataset
+
 
 DATA_DESC = {
     'data': 'svhn',

@@ -14,7 +14,7 @@ from torchvision.datasets.vision import VisionDataset
 from .dataset import SemiSupervisedDataset
 
 DATA_DESC = {
-    'data': 'tiny-imagenet',
+    'data': 'imagenet',
     'classes': tuple(range(0, 10)),
     'num_classes': 100,
     'mean': (0.485, 0.456, 0.406),

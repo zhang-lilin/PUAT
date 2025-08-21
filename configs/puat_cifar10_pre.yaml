@@ -1,43 +1,38 @@
 
-data_dir: dataset_data
-log_dir: trained_models/pre
-debug: false
-puat: true
-desc: puat_cifar10_pre_seed1
+method: puat-pre
+data_dir: ../dataset_data
+log_dir: trained_models/baselines/cifar10
 
 data: cifar10
 take_amount: 4000
+model: wrn-28-10-swish
+
+num_epochs: 100
+lr: 0.2
+scheduler: cosinew
 batch_size: 512
 unsup_fraction: 0.5
-bs_g: 256
 batch_size_validation: 256
-lr: 0.2
-
-# argments for loss
-ls: 0.1
-alpha: 0.5
-beta1: 0.03
-num_adv_epochs: 100
-adv_ramp_start: 150
-adv_ramp_end: 250
-gan_type: hinge
-gan_traind_c: int
-wa_model_for_d: false
-unsup_fraction_for_d: 0.9
-gan_start: 10
-consistency_cost: 50
-consistency_unsup_frac: 0.9
-consistency_ramp_up: 30
-adv_eval_freq: 10
-tau: 0.99
-tau_after: 0.999
+adv_eval_freq: 100
 validation: false
 
+alpha: 0.5
+gamma: 0.03
+lamb: 10.
+beta: 6.
+adv_ramp_start: 999
+adv_ramp_end: 999
+tau: 0.99
+tau_after: 0.999
+consistency_cost: 50
+consistency_ramp_up: 30
+mix_frac: 0.9
+ls: 0.1
 
+gan_start: 10
 # arguments for G
 g_model_name: resnet_sngan
 g_z_dim: 256
-#g_embed_size: 256
 g_nfilter: 32
 g_nfilter_max: 256
 g_actvn: relu
@@ -46,10 +41,7 @@ g_lr: 0.0001
 g_beta1: 0.
 g_beta2: 0.99
 g_weight_decay: 0.
-g_norm: false
 
-
-a_clip: 0.1
 a_optim: adam
 a_lr: 0.0001
 a_beta1: 0.
@@ -71,5 +63,3 @@ d_lr: 0.0001
 d_beta1: 0.
 d_beta2: 0.99
 d_weight_decay: 0.
-d_norm: false
-bcr: false

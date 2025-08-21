@@ -1,24 +1,12 @@
 # Code borrowed from https://github.com/deepmind/deepmind-research/blob/master/adversarial_robustness/pytorch/model_zoo.py
 # (Gowal et al 2020)
 
+import math
 from typing import Tuple, Union
 
-import math
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
-
-# CIFAR10_MEAN = (0.4914, 0.4822, 0.4465)
-# CIFAR10_STD = (0.2471, 0.2435, 0.2616)
-# CIFAR100_MEAN = (0.5071, 0.4865, 0.4409)
-# CIFAR100_STD = (0.2673, 0.2564, 0.2762)
-# SVHN_MEAN = (0.5, 0.5, 0.5)
-# SVHN_STD = (0.5, 0.5, 0.5)
-# # TINY_MEAN = (0.4802, 0.4481, 0.3975)
-# # TINY_STD = (0.2302, 0.2265, 0.2262)
-# IMAGENET16_MEAN = (122.68/255, 116.66/255, 104.01/255)
-# IMAGENET16_STD = (63.22/255, 61.26/255, 65.09/255)
 
 _ACTIVATION = {
     'relu': nn.ReLU,
@@ -116,16 +104,18 @@ class WideResNet(nn.Module):
                  depth: int = 28,
                  width: int = 10,
                  activation_fn: nn.Module = nn.ReLU,
-                 mean: Union[Tuple[float, ...], float] = (0.5,0.5,0.5),
-                 std: Union[Tuple[float, ...], float] = (0.5,0.5,0.5),
+                 mean: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
+                 std: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
                  padding: int = 0,
-                 num_input_channels: int = 3):
+                 num_input_channels: int = 3,
+                 normalize=True):
         super().__init__()
         self.mean = torch.tensor(mean).view(num_input_channels, 1, 1)
         self.std = torch.tensor(std).view(num_input_channels, 1, 1)
         self.mean_cuda = None
         self.std_cuda = None
         self.padding = padding
+        self.normalize = normalize
         num_channels = [16, 16 * width, 32 * width, 64 * width]
         assert (depth - 4) % 6 == 0
         num_blocks = (depth - 4) // 6
@@ -140,8 +130,9 @@ class WideResNet(nn.Module):
                         activation_fn=activation_fn))
         self.batchnorm = nn.BatchNorm2d(num_channels[3], momentum=0.01)
         self.relu = activation_fn(inplace=True)
-        self.logits = nn.Linear(num_channels[3], num_classes)
+        self.fc = nn.Linear(num_channels[3], num_classes)
         self.num_channels = num_channels[3]
+        self.feat_dim = self.num_channels
         
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -153,60 +144,47 @@ class WideResNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.bias.data.zero_()
     
-    def forward(self, x):
+    def forward(self, x, feats=False):
         if self.padding > 0:
             x = F.pad(x, (self.padding,) * 4)
-        if x.is_cuda:
-            if self.mean_cuda is None:
-                self.mean_cuda = self.mean.cuda()
-                self.std_cuda = self.std.cuda()
-            out = (x - self.mean_cuda) / self.std_cuda
-        else:
-            out = (x - self.mean) / self.std
 
+        if self.normalize:
+            if x.is_cuda:
+                if self.mean_cuda is None:
+                    self.mean_cuda = self.mean.cuda()
+                    self.std_cuda = self.std.cuda()
+                out = (x - self.mean_cuda) / self.std_cuda
+            else:
+                out = (x - self.mean) / self.std
+        else:
+            out = x
+        
         out = self.init_conv(out)
         out = self.layer(out)
         out = self.relu(self.batchnorm(out))
         out = F.avg_pool2d(out, 8)
         out = out.view(-1, self.num_channels)
-        return self.logits(out)
-
-
-def wideresnetwithswish(name, dataset='cifar10', num_classes=10, mean=(0.5,0.5,0.5), std=(0.5,0.5,0.5), device='cpu'):
-    """
-    Returns suitable Wideresnet model with Swish activation function from its name.
-    Arguments:
-        name (str): name of resnet architecture.
-        num_classes (int): number of target classes.
-        device (str or torch.device): device to work on.
-        dataset (str): dataset to use.
-    Returns:
-        torch.nn.Module.
-    """
-    # if 'cifar10' not in dataset:
-    #     raise ValueError('WideResNets with Swish activation only support CIFAR-10 and CIFAR-100!')
+        # return self.logits(out)
+        if not feats:
+            return self.fc(out)
+        else:
+            return out, self.fc(out)
+    
+    
+def wideresnetwithswish(name, logger, num_classes=10, normalize=True, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), device='cpu'):
 
     name_parts = name.split('-')
     depth = int(name_parts[1])
     widen = int(name_parts[2])
     act_fn = name_parts[3]
-    
-    # print (f'WideResNet-{depth}-{widen}-{act_fn} uses normalization.')
-    # if 'cifar100' in dataset:
-    #     return WideResNet(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
-    #                       mean=mean, std=std)
-    # elif 'svhn' in dataset:
-    #     return WideResNet(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
-    #                       mean=mean, std=std)
-    # elif 'cifar10' in dataset:
-    #     return WideResNet(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
-    #                       mean=mean, std=std)
-    if 'imagenet16' in dataset:
-        print(f'WideResNet16-{depth}-{widen}-{act_fn} uses normalization (mean={mean}, std={std}).')
-        from .imagenet16_wideresnetwithswish import WideResNet as WideResNet16
-        return WideResNet16(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
-                          mean=mean, std=std)
-    else:
-        print(f'WideResNet-{depth}-{widen}-{act_fn} uses normalization (mean={mean}, std={std}.')
+
+    if normalize:
+        if logger is not None:
+            logger.log(f'WideResNet-{depth}-{widen} uses normalization {mean}, {std}.')
         return WideResNet(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
-                          mean=mean, std=std)
+                          mean=mean, std=std, normalize=True)
+    else:
+        if logger is not None:
+            logger.log(f'WideResNet-{depth}-{widen}-{act_fn}.')
+        return WideResNet(num_classes=num_classes, depth=depth, width=widen, activation_fn=_ACTIVATION[act_fn],
+                              normalize=False)

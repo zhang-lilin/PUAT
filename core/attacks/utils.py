@@ -1,13 +1,10 @@
 import numpy as np
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 from torch.autograd import Variable
 
 from torch.distributions import laplace
 from torch.distributions import uniform
-from torch.nn.modules.loss import _Loss
 
 
 def replicate_input(x):
@@ -213,3 +210,7 @@ def CWLoss(output, target, confidence=0):
     loss = - torch.clamp(real - other + confidence, min=0.)
     loss = torch.sum(loss)
     return loss
+
+
+
+

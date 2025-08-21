@@ -3,7 +3,6 @@ import torch
 import torch.nn as nn
 
 from .base import Attack, LabelMixin
-
 from .utils import batch_clamp
 from .utils import batch_multiply
 from .utils import clamp
@@ -11,7 +10,6 @@ from .utils import clamp_by_pnorm
 from .utils import is_float_or_torch_tensor
 from .utils import normalize_by_pnorm
 from .utils import rand_init_delta
-from .utils import replicate_input
 
 
 def perturb_iterative(xvar, yvar, predict, nb_iter, eps, eps_iter, loss_fn, delta_init=None, minimize=False, ord=np.inf, 
@@ -93,7 +91,7 @@ class PGDAttack(Attack, LabelMixin):
             ord=np.inf, targeted=False, rand_init_type='uniform'):
         super(PGDAttack, self).__init__(predict, loss_fn, clip_min, clip_max)
         self.eps = eps
-        self.nb_iter = int(nb_iter)
+        self.nb_iter = nb_iter
         self.eps_iter = eps_iter
         self.rand_init = rand_init
         self.rand_init_type = rand_init_type

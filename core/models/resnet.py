@@ -1,3 +1,5 @@
+from typing import Tuple, Union
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -107,8 +109,21 @@ class ResNet(nn.Module):
         num_classes (int): number of output classes.
         device (torch.device or str): device to work on. 
     """
-    def __init__(self, block, num_blocks, num_classes=10, device='cpu'):
+    def __init__(self, block, num_blocks, num_classes=10, device='cpu',
+                 mean: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
+                 std: Union[Tuple[float, ...], float] = (0.5, 0.5, 0.5),
+                 padding: int = 0,
+                 num_input_channels: int = 3,
+                 normalize=True,
+                 ):
         super(ResNet, self).__init__()
+        self.mean = torch.tensor(mean).view(num_input_channels, 1, 1)
+        self.std = torch.tensor(std).view(num_input_channels, 1, 1)
+        self.mean_cuda = None
+        self.std_cuda = None
+        self.normalize = normalize
+        self.padding = padding
+
         self.in_planes = 64
 
         self.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -118,6 +133,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.linear = nn.Linear(512 * block.expansion, num_classes)
+        self.feat_dim = 512 * block.expansion
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -127,7 +143,18 @@ class ResNet(nn.Module):
             self.in_planes = planes * block.expansion
         return nn.Sequential(*layers)
 
-    def forward(self, x):
+    def forward(self, x, feats=False):
+        if self.padding > 0:
+            x = F.pad(x, (self.padding,) * 4)
+        if self.normalize:
+            if x.is_cuda:
+                if self.mean_cuda is None:
+                    self.mean_cuda = self.mean.cuda()
+                    self.std_cuda = self.std.cuda()
+                x = (x - self.mean_cuda) / self.std_cuda
+            else:
+                x = (x - self.mean) / self.std
+
         out = F.relu(self.bn1(self.conv1(x)))
         out = self.layer1(out)
         out = self.layer2(out)
@@ -135,11 +162,72 @@ class ResNet(nn.Module):
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        return out
+        if not feats:
+            return self.linear(out)
+        else:
+            return out, self.linear(out)
+        # out = self.linear(out)
+        # return out
+
+    def rf_output(self, x, intermediate_propagate=0, pop=0):
+        if intermediate_propagate == 0:
+            if self.padding > 0:
+                x = F.pad(x, (self.padding,) * 4)
+            if self.normalize:
+                if x.is_cuda:
+                    if self.mean_cuda is None:
+                        self.mean_cuda = self.mean.cuda()
+                        self.std_cuda = self.std.cuda()
+                    x = (x - self.mean_cuda) / self.std_cuda
+                else:
+                    x = (x - self.mean) / self.std
+            out = F.relu(self.bn1(self.conv1(x)))
+            out = self.layer1(out)
+            out = self.layer2(out)
+            if pop == 1:
+                return out
+            out = self.layer3(out)
+            if pop == 2:
+                return out
+            out = self.layer4(out)
+            if pop == 3:
+                return out
+            out = F.avg_pool2d(out, 4)
+            out = out.view(out.size(0), -1)
+            return self.linear(out)
+
+        elif intermediate_propagate == 1:
+            out = x
+            out = self.layer3(out)
+            out = self.layer4(out)
+            out = F.avg_pool2d(out, 4)
+            out = out.view(out.size(0), -1)
+            return self.linear(out)
+
+        elif intermediate_propagate == 2:
+            out = x
+            out = self.layer4(out)
+            out = F.avg_pool2d(out, 4)
+            out = out.view(out.size(0), -1)
+            return self.linear(out)
+
+        elif intermediate_propagate == 3:
+            out = x
+            out = F.avg_pool2d(out, 4)
+            out = out.view(out.size(0), -1)
+            return self.linear(out)
 
 
-def resnet(name, num_classes=10, pretrained=False, device='cpu'):
+
+NUM_BLOCKS = {
+    'resnet18': [2, 2, 2, 2],
+    'resnet34': [3, 4, 6, 3],
+    'resnet50': [3, 4, 6, 3],
+    'resnet101': [3, 4, 23, 3],
+    'resnet152': [3, 8, 36, 3],
+}
+
+def resnet(name, num_classes=10, normalize=True, mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5), device='cpu'):
     """
     Returns suitable Resnet model from its name.
     Arguments:
@@ -150,14 +238,23 @@ def resnet(name, num_classes=10, pretrained=False, device='cpu'):
     Returns:
         torch.nn.Module.
     """
-    if name == 'resnet18':
-        return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, device=device)
-    elif name == 'resnet34':
-        return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes, device=device)
-    elif name == 'resnet50':
-        return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, device=device)
-    elif name == 'resnet101':
-        return ResNet(Bottleneck, [3, 4, 23, 3], num_classes=num_classes, device=device)
-    
-    raise ValueError('Only resnet18, resnet34, resnet50 and resnet101 are supported!')
-    return
+    # if name == 'resnet18':
+    #     return ResNet(BasicBlock, [2, 2, 2, 2], num_classes=num_classes, device=device)
+    # elif name == 'resnet34':
+    #     return ResNet(BasicBlock, [3, 4, 6, 3], num_classes=num_classes, device=device)
+    # elif name == 'resnet50':
+    #     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, device=device)
+    # elif name == 'resnet101':
+    #     return ResNet(Bottleneck, [3, 4, 23, 3], num_classes=num_classes, device=device)
+
+    assert name in NUM_BLOCKS
+    name_ = name.replace('resnet', 'ResNet')
+
+    if normalize:
+        print(f'{name_} uses normalization {mean}, {std}.')
+        return ResNet(BasicBlock, num_blocks=NUM_BLOCKS[name],num_classes=num_classes, device=device,
+                      mean=mean, std=std, normalize=True)
+    else:
+        print(f'{name_}.')
+        return ResNet(BasicBlock, num_blocks=NUM_BLOCKS[name],num_classes=num_classes, device=device,
+                      normalize=False)

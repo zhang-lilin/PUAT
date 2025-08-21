@@ -1,48 +1,39 @@
 
-data_dir: dataset_data
-log_dir: trained_models
-debug: false
-puat: true
-desc: svhn_seed1
-
-beta: 10.0
-beta2: 6.0
+method: puat
+data_dir: ../dataset_data
+log_dir: trained_models/baselines/svhn
 
 data: svhn
 take_amount: 1000
+model: wrn-28-10-swish
+
+num_epochs: 100
+lr: 0.2
+scheduler: cosinew
 batch_size: 512
 unsup_fraction: 0.5
-bs_g: 256
 batch_size_validation: 256
-model: wrn-28-10-swish
-lr: 0.2
-
-# argments for loss
-pre_resume_path: trained_models/pre/svhn_pre_seed1/state-last.pt
-ls: 0.1
-alpha: 0.5
-beta1: 0.03
-num_adv_epochs: 100
-adv_ramp_start: 0
-adv_ramp_end: 10
-gan_type: hinge
-gan_traind_c: int
-wa_model_for_d: false
-unsup_fraction_for_d: 0.9
-gan_start: 0
-consistency_cost: 50
-consistency_unsup_frac: 0.9
-consistency_ramp_up: 0
-adv_eval_freq: 20
-#attack: fgsm
-tau: 0.99
-tau_after: 0.995
+adv_eval_freq: 10
 validation: true
 
+pre_resume_path: trained_models/baselines/datainfo/puat-pre_modelinfo_datainfo_seedinfo/state-last.pt
+alpha: 0.5
+gamma: 0.03
+lamb: 10.
+beta: 6.
+ls: 0.1
+adv_ramp_start: 0
+adv_ramp_end: 10
+mix_frac: 0.9
+consistency_cost: 50
+consistency_ramp_up: 0
+tau: 0.99
+tau_after: 0.995
+
+gan_start: 0
 # arguments for G
 g_model_name: resnet_sngan
 g_z_dim: 256
-#g_embed_size: 256
 g_nfilter: 32
 g_nfilter_max: 256
 g_actvn: relu
@@ -51,10 +42,7 @@ g_lr: 0.0001
 g_beta1: 0.
 g_beta2: 0.99
 g_weight_decay: 0.
-g_norm: false
 
-
-a_clip: 0.1
 a_optim: adam
 a_lr: 0.0001
 a_beta1: 0.
@@ -76,5 +64,3 @@ d_lr: 0.0001
 d_beta1: 0.
 d_beta2: 0.99
 d_weight_decay: 0.
-d_norm: false
-bcr: false

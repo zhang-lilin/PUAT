@@ -1,17 +1,19 @@
 import logging
 import os
 import pickle
+
+import coloredlogs
 import torchvision
 from matplotlib import pyplot as plt
-import coloredlogs
+
+plt.switch_backend('agg')
+
 
 def get_logger(logger_name=None):
     if logger_name is not None:
         logger = logging.getLogger(logger_name)
         logger.propagate = 0
-    else:
-        logger = logging.getLogger("taufikxu")
-    return logger
+        return logger
 
 
 def build_logger(path, logger_name=None):
@@ -54,18 +56,27 @@ class Logger(object):
         self.path = path
         self.logger = build_logger(path)
         self.log_dir = os.path.dirname(path)
-        # self.setup_file_logger()
+        filename = os.path.join(self.log_dir, 'stats.pkl')
+        self.iflog = True
+        self.log_list = []
         self.stats = dict()
+        if os.path.exists(filename):
+            with open(filename, "rb") as f:
+                self.stats = pickle.load(f)
+
         print ('Logging to file: ', self.path)
-        
-    # def setup_file_logger(self):
-    #     hdlr = logging.FileHandler(self.path, 'w+')
-    #     self.logger.addHandler(hdlr)
-    #     self.logger.setLevel(logging.INFO)
+
 
     def log(self, message):
-        # print (message)
-        self.logger.info(message)
+        if self.iflog:
+            if len(self.log_list) > 0:
+                for i in self.log_list:
+                    self.logger.info(i)
+                self.log_list = []
+            self.logger.info(message)
+        else:
+            self.log_list.append(message)
+            print(message)
 
     def log_info(self, step, cats=None):
         if cats is None:
@@ -91,7 +102,7 @@ class Logger(object):
             self.stats[category] = {}
         if k not in self.stats[category]:
             self.stats[category][k] = []
-        if unique:
+        elif unique:
             for tup in self.stats[category][k]:
                 if tup[0] == global_it:
                     self.stats[category][k].remove(tup)
