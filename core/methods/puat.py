@@ -140,7 +140,7 @@ class PUAT(nn.Module):
                 loss_consistency = zero
             (loss_l + loss_consistency + loss_fake).backward()
 
-            if self.params.beta2 > 0:
+            if self.params.beta > 0:
                 x_rae = self.get_adversarial_examples(model, input, input_label, logits_natural=prob_C)
                 logits_adv_rae = model(x_rae.detach())
                 loss_robust_rae = adv_ramp * self.params.beta * self.criterion_ce(logits_adv_rae, input_label)

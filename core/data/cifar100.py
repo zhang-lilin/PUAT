@@ -2,7 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import re
-from .dataset import SemiSupervisedDataset, InstanceSampleDataset, PseudoDataset
+from .dataset import SemiSupervisedDataset
 
 
 DATA_DESC = {

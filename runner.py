@@ -2,14 +2,16 @@ import itertools
 import os
 
 
-methods = [
-    'puat-pre',
-    'puat',
-]
-
+methods = ['puat-pre','puat',]
 dataset = 'cifar10'
 ARGS_FOR_TUNE = dict(
+    # wrn-28-10-swish
     seed = [1,2,3,],
+    model = ['wrn-28-10-swish'],
+    # # wrn-28-10-relu
+    # seed = [1,2,3,],
+    # model = ['wrn-28-10'],
+    # beta = [10.],
 )
 if __name__ == '__main__':
     gpu = 0

@@ -13,7 +13,9 @@ def get_logger(logger_name=None):
     if logger_name is not None:
         logger = logging.getLogger(logger_name)
         logger.propagate = 0
-        return logger
+    else:
+        logger = logging.getLogger("taufikxu")
+    return logger
 
 
 def build_logger(path, logger_name=None):

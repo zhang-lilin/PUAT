@@ -54,10 +54,10 @@ def get_attacker_optimizer(arg, base_dataset):
     _, _, nlabel = hw_dict[base_dataset.lower()]
     actvn = actvn_dict[arg.a_actvn]()
     A = module(
-        z_dim=arg.g_z_dim,
+        z_dim = arg.g_z_dim,
         num_classes = nlabel,
-        y_embed_size=arg.a_embed_size,
-        epsilon=arg.a_clip,
+        y_embed_size = arg.a_embed_size,
+        epsilon = 0.1,
         activation_fn = actvn,
     )
     optim = get_optimizer(A.parameters(), arg.a_optim, arg.a_lr, arg.a_beta1, arg.a_beta2, arg.a_weight_decay)

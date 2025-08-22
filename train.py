@@ -104,15 +104,11 @@ seed(args.seed)
 trainer = Trainer(info, args, logger=logger, dataloader=train_dataloader)
 
 NUM_ADV_EPOCHS = args.num_epochs
-if args.debug:
-    NUM_ADV_EPOCHS = 1
-
 # Adversarial Training
 if NUM_ADV_EPOCHS > 0:
     logger.log('\n\n')
     old_score = [0.0, 0.0]
     logger.log('Adversarial training for {} epochs'.format(NUM_ADV_EPOCHS))
-    # trainer.init_optimizer(args.num_adv_epochs)
 
 if resume_path is not None:
     if eval_dataloader and os.path.exists(WEIGHTS):
@@ -147,16 +143,13 @@ for epoch in range(start_epoch, NUM_ADV_EPOCHS+1):
     if trainer.scheduler is not None:
         last_lr = trainer.scheduler.get_last_lr()[0]
         logger.add('scheduler', 'lr', last_lr, epoch)
-
     start = time.time()
     res = trainer.train(train_dataloader, epoch=epoch, verbose=True)
     for k in res:
         if 'acc' in k:
             logger.add('train', k, res[k] * 100, epoch)
-
     end = time.time()
     logger.add('time', 'train', format_time(end - start), epoch)
-
     start_ = time.time()
     if eval_dataloader:
         eval_acc = trainer.eval(eval_dataloader, adversarial=False)
@@ -167,17 +160,14 @@ for epoch in range(start_epoch, NUM_ADV_EPOCHS+1):
             old_score[0], old_score[1] = test_acc, eval_adv_acc
             trainer.save_model(WEIGHTS, epoch)
             best_epoch = epoch
-
     test_acc = trainer.eval(test_dataloader, adversarial=False, verbose=True)
     logger.add('test', 'clean_acc', test_acc * 100, epoch)
     if epoch % args.adv_eval_freq == 0 or epoch == NUM_ADV_EPOCHS:
         test_adv_acc = trainer.eval(test_dataloader, adversarial=True, verbose=True)
         logger.add("test", "adversarial_acc", test_adv_acc * 100, epoch)
-
     end_ = time.time()
     logger.add('time', 'eval', format_time(end_ - start_), epoch)
     trainer.save_model(os.path.join(LOG_DIR, 'state-last.pt'), epoch)
-
     logger.log_info(epoch, ['train', 'test', 'eval', 'scheduler', 'time'])
     logger.plot_learning_curve()
     logger.save_stats('stats.pkl')

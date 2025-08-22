@@ -8,27 +8,30 @@ import numpy as np
 import torch
 
 
-# class SmoothCrossEntropyLoss(torch.nn.Module):
-#     """
-#     Cross entropy loss with label smoothing.
-#     """
-#     def __init__(self, smoothing=0.0, reduction='mean'):
-#         super(SmoothCrossEntropyLoss, self).__init__()
-#         self.smoothing = smoothing
-#         self.confidence = 1.0 - smoothing
-#         self.reduction = reduction
-#
-#     def forward(self, x, target):
-#         logprobs = torch.nn.functional.log_softmax(x, dim=-1)
-#         nll_loss = -logprobs.gather(dim=-1, index=target.unsqueeze(1))
-#         nll_loss = nll_loss.squeeze(1)
-#         smooth_loss = -logprobs.mean(dim=-1)
-#         loss = self.confidence * nll_loss + self.smoothing * smooth_loss
-#         if self.reduction == 'mean':
-#             return loss.mean()
-#         elif self.reduction == 'sum':
-#             return loss.sum()
-#         return loss
+class CosineLR(torch.optim.lr_scheduler._LRScheduler):
+    """
+    Cosine annealing LR schedule (used in Carmon et al, 2019).
+    """
+
+    def __init__(self, optimizer, max_lr, epochs, last_epoch=-1):
+        self.max_lr = max_lr
+        self.epochs = epochs
+        self._reset()
+        super(CosineLR, self).__init__(optimizer, last_epoch)
+
+    def _reset(self):
+        self.current_lr = self.max_lr
+        self.current_epoch = 1
+
+    def step(self):
+        self.current_lr = self.max_lr * 0.5 * (1 + np.cos((self.current_epoch - 1) / self.epochs * np.pi))
+        for param_group in self.optimizer.param_groups:
+            param_group['lr'] = self.current_lr
+        self.current_epoch += 1
+        self._last_lr = [group['lr'] for group in self.optimizer.param_groups]
+
+    def get_lr(self):
+        return self.current_lr
 
 
 def track_bn_stats(model, track_stats=True):

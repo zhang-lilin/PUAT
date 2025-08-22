@@ -7,8 +7,8 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm as tqdm
 from core.attacks import create_attack
-from core.methods.rst import CosineLR
 from core.models import create_model
+from .utils import CosineLR
 
 class Trainer(object):
     """
