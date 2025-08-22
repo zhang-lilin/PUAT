@@ -102,6 +102,8 @@ args.num_batches = len(train_dataloader)
 logger.log("### " + ("%30s" % "TRAINER"))
 seed(args.seed)
 trainer = Trainer(info, args, logger=logger, dataloader=train_dataloader)
+if args.pre_resume_path:
+    trainer.load_model(args.pre_resume_path, False)
 
 NUM_ADV_EPOCHS = args.num_epochs
 # Adversarial Training
