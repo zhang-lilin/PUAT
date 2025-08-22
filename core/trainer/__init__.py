@@ -266,6 +266,8 @@ class Trainer(object):
             if load_opt:
                 self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
                 self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+                if hasattr(self.loss, 'current_step'):
+                    self.loss.current_step = checkpoint['epoch'] * self.loss.num_batches
 
             if 'puat' in self.params.method:
                 self.loss.net_A.load_state_dict(checkpoint['net_A'])
@@ -274,8 +276,5 @@ class Trainer(object):
                 self.loss.opt_G.load_state_dict(checkpoint['optimizer_G'])
                 self.loss.net_D.load_state_dict(checkpoint['net_D'])
                 self.loss.opt_D.load_state_dict(checkpoint['optimizer_D'])
-
-            if hasattr(self.loss, 'current_step'):
-                self.loss.current_step = checkpoint['epoch'] * self.loss.num_batches
 
         return checkpoint['epoch']
